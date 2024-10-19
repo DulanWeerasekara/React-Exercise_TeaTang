@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast" // Shadcn Toast Component
+import { useToast } from "@/hooks/use-toast" 
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // For delete confirmation
 import { Toaster } from "@/components/ui/toaster";
 import { 
@@ -186,7 +186,7 @@ const Home: React.FC = () => {
   });
   const { setTheme } = useTheme();
 
-  // Pagination logic
+  //Pagination logic
   const totalPages = Math.ceil(filteredTodos.length / itemsPerPage);
   const indexOfLastTodo = currentPage * itemsPerPage;
   const indexOfFirstTodo = indexOfLastTodo - itemsPerPage;
@@ -201,6 +201,7 @@ const Home: React.FC = () => {
     <div className="flex justify-between items-center mb-4">
       <h1 className="text-4xl font-bold">Todo App</h1>
       <div className="flex items-center">
+        {/* theme change Light dark system*/}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -299,38 +300,38 @@ const Home: React.FC = () => {
       </Card>
 
       {/* Modal for adding new todo */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <h2 className="text-xl mb-2">Add New Todo</h2>
-            <Input
-              placeholder="Todo title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mb-2"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                {userId ? users.find((user) => user.id === userId)?.name : "Select User"}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {users.map((user) => (
-                  <DropdownMenuItem key={user.id} onSelect={() => setUserId(user.id)}>
-                    {user.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+{isModalOpen && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-1/3"> {/* Adjust width here */}
+      <h2 className="text-xl mb-2">Add New Todo</h2>
+      <Input
+        placeholder="Todo title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="mb-2"
+      />
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          {userId ? users.find((user) => user.id === userId)?.name : "Select User (optional)"}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {users.map((user) => (
+            <DropdownMenuItem key={user.id} onSelect={() => setUserId(user.id)}>
+              {user.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-            <div className="mt-4">
-              <Button onClick={createTodo}>Add Todo</Button>
-              <Button onClick={() => setIsModalOpen(false)} variant="destructive" className="ml-2">
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="mt-4">
+        <Button onClick={createTodo}>Add Todo</Button>
+        <Button onClick={() => setIsModalOpen(false)} variant="destructive" className="ml-2">
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Delete confirmation dialog */}
       {selectedTodoToDelete && (
