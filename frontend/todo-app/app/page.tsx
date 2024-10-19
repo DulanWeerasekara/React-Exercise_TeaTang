@@ -197,34 +197,41 @@ const Home: React.FC = () => {
   };
 
   return (
-  
-    <div className="container mx-auto p-4"><DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-      <Toaster />
+    <div className="container mx-auto p-4">
+    <div className="flex justify-between items-center mb-4">
+      <h1 className="text-4xl font-bold">Todo App</h1>
+      <div className="flex items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+      </div>
+    </div>
+    <Toaster />
+      
       <Card>
-        <h1 className="text-2xl font-bold mb-4">Todo List</h1>
+        
+        <div className="flex justify-between items-center mb-4">
+    <h2 className="text-2xl  font-bold">Todo List</h2>
+    <Button onClick={() => setIsModalOpen(true)}>
+      Add New Todo
+    </Button>
+  </div>
 
         {/* Filter Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger><>Filter   </>
             <Button>{filter === "all" ? "All Todos" : filter.charAt(0).toUpperCase() + filter.slice(1)}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -233,46 +240,45 @@ const Home: React.FC = () => {
             <DropdownMenuItem onSelect={() => setFilter("uncompleted")}>Uncompleted</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <Button className="mt-4" onClick={() => setIsModalOpen(true)}>
-          Add New Todo
-        </Button>
-
         <Table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>User</th>
-              <th>Completed</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentTodos.map((todo) => (
-              <tr key={todo.id}>
-                <td>{todo.title}</td>
-                <td>{users.find((user) => user.id === todo.user_id)?.name || "Unassigned"}</td>
-                <td>
-                  <Checkbox checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
-                </td>
-                <td>
-                  <Button onClick={() => toggleTodo(todo.id)}>
-                    {todo.completed ? "Mark Incomplete" : "Mark Complete"}
-                  </Button>
-                  <Button className="ml-2" onClick={() => confirmDeleteTodo(todo.id)} variant="destructive">
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+  <thead>
+    <tr>
+      <th className="w-1/2 text-left p-2">Title</th>
+      <th className="w-1/3 text-left p-2">User</th>
+      <th className="w-1/6 text-center p-2">Completed</th>
+      <th className="w-1/6 text-center p-2">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {currentTodos.map((todo) => (
+      <tr key={todo.id}>
+        <td className="p-2">{todo.title}</td>
+        <td className="p-2">
+          {users.find((user) => user.id === todo.user_id)?.name || "Unassigned"}
+        </td>
+        <td className="p-2 text-center">
+          <Checkbox checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
+        </td>
+        <td className="p-2 text-center flex justify-center space-x-2">
+          <Button onClick={() => toggleTodo(todo.id)}>
+            {todo.completed ? "Mark Incomplete" : "Mark Complete"}
+          </Button>
+          <Button onClick={() => confirmDeleteTodo(todo.id)} variant="destructive">
+            Delete
+          </Button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</Table>
+
+
 
         {/* Pagination Component */}
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+              <PaginationPrevious onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
               <PaginationItem key={index + 1}>
@@ -286,7 +292,7 @@ const Home: React.FC = () => {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+              <PaginationNext onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
