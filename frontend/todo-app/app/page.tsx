@@ -15,6 +15,18 @@ import {
 import { useToast } from "@/hooks/use-toast" // Shadcn Toast Component
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // For delete confirmation
 import { Toaster } from "@/components/ui/toaster";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ThemeProvider } from "@/components/theme-provider"
+import { useTheme } from "next-themes"
+import { Moon, Sun } from "lucide-react"
+
 // API Base URL for FastAPI
 const apiBaseUrl = "http://127.0.0.1:8000";
 
@@ -39,12 +51,44 @@ const Home: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("all");
   const [selectedTodoToDelete, setSelectedTodoToDelete] = useState<string | null>(null); // For delete confirmation
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 5; // Number of items per page
 
   useEffect(() => {
     fetchTodos();
     fetchUsers();
   }, []);
-  const { toast } = useToast()
+  
+  const { toast } = useToast();
+
+  // Validation and API fetching functions...
+  const validateTitle = () => {
+    if (!title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Title cannot be empty.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (/^\d/.test(title)) {
+      toast({
+        title: "Validation Error",
+        description: "Title cannot start with a number.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (title.length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Title cannot exceed 100 characters.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
   const fetchTodos = async () => {
     try {
@@ -73,18 +117,16 @@ const Home: React.FC = () => {
   };
 
   const createTodo = async () => {
-    if (!title) return;
+    if (!validateTitle()) return; // Validate title before creating
     try {
-      toast({
-        description: "Todo has been Added.",
-        
-      })
       await axios.post<Todo>(`${apiBaseUrl}/todos`, { title, user_id: userId });
       fetchTodos();
       setTitle("");
       setUserId("");
       setIsModalOpen(false);
-      
+      toast({
+        description: "Todo has been Added.",
+      });
     } catch (error) {
       toast({
         title: "Error creating Todo",
@@ -126,7 +168,6 @@ const Home: React.FC = () => {
         title: "Todo Deleted",
         variant: "destructive",
       });
-    
       setSelectedTodoToDelete(null); // Close confirmation dialog
     } catch (error) {
       toast({
@@ -137,14 +178,47 @@ const Home: React.FC = () => {
     }
   };
 
+  // Filter todos based on completed status
   const filteredTodos = todos.filter((todo) => {
     if (filter === "completed") return todo.completed;
     if (filter === "uncompleted") return !todo.completed;
     return true; // "all" shows everything
   });
+  const { setTheme } = useTheme();
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTodos.length / itemsPerPage);
+  const indexOfLastTodo = currentPage * itemsPerPage;
+  const indexOfFirstTodo = indexOfLastTodo - itemsPerPage;
+  const currentTodos = filteredTodos.slice(indexOfFirstTodo, indexOfLastTodo);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
-    <div className="container mx-auto p-4"><Toaster/>
+  
+    <div className="container mx-auto p-4"><DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+      <Toaster />
       <Card>
         <h1 className="text-2xl font-bold mb-4">Todo List</h1>
 
@@ -154,15 +228,9 @@ const Home: React.FC = () => {
             <Button>{filter === "all" ? "All Todos" : filter.charAt(0).toUpperCase() + filter.slice(1)}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => setFilter("all")}>
-              All
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setFilter("completed")}>
-              Completed
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setFilter("uncompleted")}>
-              Uncompleted
-            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setFilter("all")}>All</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setFilter("completed")}>Completed</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setFilter("uncompleted")}>Uncompleted</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -180,28 +248,18 @@ const Home: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredTodos.map((todo) => (
+            {currentTodos.map((todo) => (
               <tr key={todo.id}>
                 <td>{todo.title}</td>
+                <td>{users.find((user) => user.id === todo.user_id)?.name || "Unassigned"}</td>
                 <td>
-                  {users.find((user) => user.id === todo.user_id)?.name ||
-                    "Unassigned"}
-                </td>
-                <td>
-                  <Checkbox
-                    checked={todo.completed}
-                    onChange={() => toggleTodo(todo.id)}
-                  />
+                  <Checkbox checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
                 </td>
                 <td>
                   <Button onClick={() => toggleTodo(todo.id)}>
                     {todo.completed ? "Mark Incomplete" : "Mark Complete"}
                   </Button>
-                  <Button
-                    className="ml-2"
-                    onClick={() => confirmDeleteTodo(todo.id)} // Confirm before delete
-                    variant="destructive"
-                  >
+                  <Button className="ml-2" onClick={() => confirmDeleteTodo(todo.id)} variant="destructive">
                     Delete
                   </Button>
                 </td>
@@ -209,6 +267,29 @@ const Home: React.FC = () => {
             ))}
           </tbody>
         </Table>
+
+        {/* Pagination Component */}
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, index) => (
+              <PaginationItem key={index + 1}>
+                <PaginationLink 
+                  href="#" 
+                  isActive={currentPage === index + 1} 
+                  onClick={() => handlePageChange(index + 1)}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </Card>
 
       {/* Modal for adding new todo */}
@@ -224,16 +305,11 @@ const Home: React.FC = () => {
             />
             <DropdownMenu>
               <DropdownMenuTrigger>
-                {userId
-                  ? users.find((user) => user.id === userId)?.name
-                  : "Select User"}
+                {userId ? users.find((user) => user.id === userId)?.name : "Select User"}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {users.map((user) => (
-                  <DropdownMenuItem
-                    key={user.id}
-                    onSelect={() => setUserId(user.id)}
-                  >
+                  <DropdownMenuItem key={user.id} onSelect={() => setUserId(user.id)}>
                     {user.name}
                   </DropdownMenuItem>
                 ))}
@@ -242,11 +318,7 @@ const Home: React.FC = () => {
 
             <div className="mt-4">
               <Button onClick={createTodo}>Add Todo</Button>
-              <Button
-                onClick={() => setIsModalOpen(false)}
-                variant="destructive"
-                className="ml-2"
-              >
+              <Button onClick={() => setIsModalOpen(false)} variant="destructive" className="ml-2">
                 Cancel
               </Button>
             </div>
@@ -276,3 +348,5 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+
+
